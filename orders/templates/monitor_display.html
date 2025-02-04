@@ -7,8 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background: #000;
-            color: #fff;
+            background: #ffffff;
+            color: #333333;
             overflow: hidden;
             font-size: 24px;
             margin: 0;
@@ -27,16 +27,17 @@
             font-weight: bold;
             margin-bottom: 30px;
             text-align: center;
-            color: #fff;
+            color: #222222;
         }
         .order-item {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.05);
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
             font-size: 28px;
             display: flex;
             align-items: center;
+            color: #333333;
         }
         .order-number {
             margin-right: auto;
@@ -55,15 +56,15 @@
         }
         .status-in-process {
             background-color: #ffc107;
-            color: #000;
+            color: #000000;
         }
         .status-finished {
             background-color: #28a745;
-            color: #fff;
+            color: #ffffff;
         }
         .divider {
             width: 2px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.1);
             margin: 0 20px;
         }
         @media (max-width: 768px) {
@@ -118,9 +119,9 @@
                 {% endfor %}
             </div>
         </div>
-        
+
         <div class="divider"></div>
-        
+
         <div class="orders-section">
             <h1 class="section-title">მზა შეკვეთები</h1>
             <div id="finishedList">
