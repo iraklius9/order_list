@@ -1,6 +1,8 @@
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from .models import Order
 
 
@@ -11,6 +13,25 @@ def clean_old_orders():
             order.delete()
 
 
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('order_list')
+        else:
+            return render(request, 'login.html', {'error': 'Invalid credentials'})
+    return render(request, 'login.html')
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+
+@login_required(login_url='login')
 def order_list(request):
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -42,6 +63,7 @@ def order_list(request):
     })
 
 
+@login_required(login_url='login')
 def user_order_list(request):
     clean_old_orders()
     in_process_orders = Order.objects.filter(status='In Process').order_by('-created_at')
@@ -53,6 +75,7 @@ def user_order_list(request):
     })
 
 
+@login_required(login_url='login')
 def get_orders(request):
     clean_old_orders()
     in_process_orders = Order.objects.filter(status='In Process').order_by('-created_at')
@@ -113,6 +136,7 @@ def get_orders(request):
     })
 
 
+@login_required(login_url='login')
 def get_monitor_orders(request):
     """View for monitor display - returns only order numbers and status"""
     clean_old_orders()
@@ -139,6 +163,7 @@ def get_monitor_orders(request):
     })
 
 
+@login_required(login_url='login')
 def monitor_display(request):
     """View for monitor display - shows only orders without any UI controls"""
     clean_old_orders()
@@ -149,3 +174,10 @@ def monitor_display(request):
         'in_process_orders': in_process_orders,
         'finished_orders': finished_orders,
     })
+
+
+@login_required(login_url='login')
+def mark_as_finished(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number)
+    order.mark_as_finished()
+    return JsonResponse({'status': 'success'})

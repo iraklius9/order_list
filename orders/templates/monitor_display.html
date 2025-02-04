@@ -138,7 +138,7 @@
     <script>
         // Auto-refresh orders every 5 seconds without visual glitches
         setInterval(function() {
-            $.get('/get_monitor_orders/', function(data) {
+            $.get('{% url "monitor_orders" %}', function(data) {
                 // Only update if content is different
                 if ($('#inProcessList').html() !== data.in_process_html) {
                     $('#inProcessList').html(data.in_process_html);

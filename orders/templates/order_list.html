@@ -65,10 +65,33 @@
             right: 20px;
             z-index: 9999;
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
+        <div class="header">
+            <h1>Order List</h1>
+            <div class="header-buttons">
+                <a href="{% url 'monitor_display' %}" class="btn btn-primary" target="_blank">Open Monitor Display</a>
+                <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
         <div class="row mb-4">
             <div class="col-md-6 d-flex">
                 <button class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#addOrderModal">
