@@ -1,84 +1,296 @@
 <!DOCTYPE html>
-<html>
+<html lang="ka" data-bs-theme="light">
 <head>
-    <title>Order Management</title>
+    <title>შეკვეთების მართვის სისტემა</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .order-item {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .order-number {
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+        .status-in-process {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-finished {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .btn-group {
+            margin-left: 10px;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            padding: 15px;
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+    </style>
 </head>
-<body class="bg-light">
-<div class="container mt-4">
-
-    <div class="row mt-4">
-        <!-- In Process Orders Section -->
-        <div class="col-md-6">
-            <h2 class="text-primary">პროცესშია</h2>
-            <ul class="list-group">
-                {% for order in in_process_orders %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    შეკვეთა: {{ order.order_number }}
-                    <form action="" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="update_order">
-                        <input type="hidden" name="order_id" value="{{ order.id }}">
-                        <button type="submit" class="btn btn-success btn-sm">დასრულებულად მონიშვნა</button>
-                    </form>
-                    <form action="" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="remove_order">
-                        <input type="hidden" name="order_id" value="{{ order.id }}">
-                        <button type="submit" class="btn btn-danger btn-sm">წაშლა</button>
-                    </form>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Finished Orders Section -->
-        <div class="col-md-6">
-            <h2 class="text-success">მზადაა</h2>
-            <ul class="list-group">
-                {% for order in finished_orders %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    შეკვეთა: {{ order.order_number }} მზადაა
-                    <form action="" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="remove_order">
-                        <input type="hidden" name="order_id" value="{{ order.id }}">
-                        <button type="submit" class="btn btn-danger btn-sm">წაშლა</button>
-                    </form>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-
-    <div class="text-center mt-4">
-        <a href="#" data-bs-toggle="modal" data-bs-target="#addOrderModal" class="btn btn-primary">შეკვეთის დამატება</a>
-    </div>
-
-    <!-- Add Order Modal -->
-    <div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addOrderModalLabel">შეკვეთის დამატება</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<body>
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-6 d-flex">
+                <button class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+                    <i class="bi bi-plus-circle me-2"></i>შეკვეთის დამატება
+                </button>
+                <div class="input-group">
+                    <input type="text" id="searchInput" class="form-control" placeholder="შეკვეთის ძებნა...">
+                    <button class="btn btn-outline-primary" type="button" id="searchButton">
+                        <i class="bi bi-search"></i> ძებნა
+                    </button>
                 </div>
-                <div class="modal-body">
-                    <form action="" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="add_order">
-                        <div class="mb-3">
-                            <label for="order_number" class="form-label">შეკვეთის ნომერი</label>
-                            <input type="text" class="form-control" id="order_number" name="order_number" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- In Process Orders Section -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-hourglass-split me-2"></i>შეკვეთები
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group" id="inProcessList">
+                            {% for order in in_process_orders %}
+                            <div class="order-item list-group-item d-flex align-items-center">
+                                <div class="order-number">
+                                    <i class="bi bi-box-seam me-2"></i>
+                                    შეკვეთა: {{ order.order_number }}
+                                </div>
+                                <div class="btn-group ms-auto">
+                                    <button class="btn btn-success btn-sm complete-order" data-id="{{ order.id }}">
+                                        <i class="bi bi-check-circle me-1"></i>დასრულება
+                                    </button>
+                                    <button class="btn btn-danger btn-sm remove-order" data-id="{{ order.id }}">
+                                        <i class="bi bi-trash me-1"></i>წაშლა
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
-                        <button type="submit" class="btn btn-primary">დამატება</button>
-                    </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finished Orders Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-check-circle me-2"></i>დასრულებული შეკვეთები
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group" id="finishedList">
+                            {% for order in finished_orders %}
+                            <div class="order-item list-group-item d-flex align-items-center">
+                                <div class="order-number">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    შეკვეთა: {{ order.order_number }}
+                                </div>
+                                <button class="btn btn-danger btn-sm remove-order ms-auto" data-id="{{ order.id }}">
+                                    <i class="bi bi-trash me-1"></i>წაშლა
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Add Order Modal -->
+    <div class="modal fade" id="addOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ახალი შეკვეთა</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="addOrderForm">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_order">
+                        <div class="mb-3">
+                            <label for="orderNumber" class="form-label">შეკვეთის ნომერი</label>
+                            <input type="text" class="form-control" id="orderNumber" name="order_number" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">გაუქმება</button>
+                        <button type="submit" class="btn btn-primary">დამატება</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Search functionality
+            function performSearch() {
+                var searchValue = $('#searchInput').val().toLowerCase();
+                if (!searchValue) {
+                    location.reload(); // Reset to original order if search is empty
+                    return;
+                }
+
+                var found = false;
+                
+                // Search in in-process orders
+                $('#inProcessList .order-item').each(function() {
+                    var orderNumber = $(this).find('.order-number').text().toLowerCase();
+                    if (orderNumber.includes(searchValue)) {
+                        $(this).prependTo('#inProcessList');
+                        found = true;
+                    }
+                });
+
+                // Search in finished orders
+                $('#finishedList .order-item').each(function() {
+                    var orderNumber = $(this).find('.order-number').text().toLowerCase();
+                    if (orderNumber.includes(searchValue)) {
+                        $(this).prependTo('#finishedList');
+                        found = true;
+                    }
+                });
+
+                // Show message based on search results
+                if (!found) {
+                    window.alert('შეკვეთა "' + searchValue + '" ვერ მოიძებნა');
+                }
+            }
+
+            // Search on button click
+            $('#searchButton').on('click', function() {
+                performSearch();
+            });
+
+            // Search on Enter key press
+            $('#searchInput').on('keypress', function(e) {
+                if (e.which === 13) {  // Enter key
+                    e.preventDefault();
+                    performSearch();
+                }
+            });
+
+            // Add order form submission
+            $('#addOrderForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                
+                $.ajax({
+                    url: '',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function() {
+                        $('#addOrderModal').modal('hide');
+                        location.reload();
+                    }
+                });
+            });
+
+            // Complete order
+            $(document).on('click', '.complete-order', function() {
+                var orderId = $(this).data('id');
+                var formData = new FormData();
+                formData.append('action', 'update_order');
+                formData.append('order_id', orderId);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                $.ajax({
+                    url: '',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function() {
+                        location.reload();
+                    }
+                });
+            });
+
+            // Remove order
+            $(document).on('click', '.remove-order', function() {
+                var orderId = $(this).data('id');
+                var formData = new FormData();
+                formData.append('action', 'remove_order');
+                formData.append('order_id', orderId);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                $.ajax({
+                    url: '',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function() {
+                        location.reload();
+                    }
+                });
+            });
+
+            // Auto-refresh orders every 5 seconds
+            setInterval(function() {
+                $.get('/get_orders/', function(data) {
+                    if ($('#inProcessList').html() !== data.in_process_html) {
+                        $('#inProcessList').html(data.in_process_html);
+                    }
+                    if ($('#finishedList').html() !== data.finished_html) {
+                        $('#finishedList').html(data.finished_html);
+                    }
+                });
+            }, 5000);
+        });
+    </script>
 </body>
 </html>

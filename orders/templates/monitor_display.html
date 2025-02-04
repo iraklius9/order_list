@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <title>შეკვეთების ეკრანი</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            font-size: 24px;
+            margin: 0;
+            padding: 0;
+        }
+        .orders-container {
+            display: flex;
+            height: 100vh;
+        }
+        .orders-section {
+            flex: 1;
+            padding: 20px;
+        }
+        .section-title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #fff;
+        }
+        .order-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+        }
+        .order-number {
+            margin-right: auto;
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 24px;
+            white-space: nowrap;
+        }
+        .in-process {
+            border-left: 5px solid #ffc107;
+        }
+        .finished {
+            border-left: 5px solid #28a745;
+        }
+        .status-in-process {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .status-finished {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .divider {
+            width: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0 20px;
+        }
+        @media (max-width: 768px) {
+            .orders-container {
+                flex-direction: column;
+            }
+            .divider {
+                width: 100%;
+                height: 2px;
+                margin: 20px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Function to enter fullscreen
+        function enterFullscreen() {
+            const element = document.documentElement;
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+        }
+
+        // Enter fullscreen when page loads
+        window.onload = function() {
+            enterFullscreen();
+            // Hide cursor after 3 seconds of inactivity
+            let timeout;
+            document.onmousemove = function() {
+                document.body.style.cursor = 'default';
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    document.body.style.cursor = 'none';
+                }, 3000);
+            };
+        };
+    </script>
+    <div class="orders-container">
+        <div class="orders-section">
+            <h1 class="section-title">მიმდინარე შეკვეთები</h1>
+            <div id="inProcessList">
+                {% for order in in_process_orders %}
+                <div class="order-item in-process">
+                    <div class="order-number">შეკვეთა: {{ order.order_number }}</div>
+                    <span class="status-badge status-in-process">მზადდება</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="orders-section">
+            <h1 class="section-title">მზა შეკვეთები</h1>
+            <div id="finishedList">
+                {% for order in finished_orders %}
+                <div class="order-item finished">
+                    <div class="order-number">შეკვეთა: {{ order.order_number }}</div>
+                    <span class="status-badge status-finished">მზადაა</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Auto-refresh orders every 5 seconds without visual glitches
+        setInterval(function() {
+            $.get('/get_monitor_orders/', function(data) {
+                // Only update if content is different
+                if ($('#inProcessList').html() !== data.in_process_html) {
+                    $('#inProcessList').html(data.in_process_html);
+                }
+                if ($('#finishedList').html() !== data.finished_html) {
+                    $('#finishedList').html(data.finished_html);
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
